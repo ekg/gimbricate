@@ -8,6 +8,9 @@
 #include "gssw.h"
 #include "gfakluge.hpp"
 #include "nodes.hpp"
+#include "cigar.hpp"
+#include "dna.hpp"
+#include "align.hpp"
 //#include <limits>
 
 using namespace gimbricate;
@@ -77,7 +80,18 @@ int main(int argc, char** argv) {
             //handlegraph::handle_t a = graph->get_handle(stol(e.source_name), !e.source_orientation_forward);
             //handlegraph::handle_t b = graph->get_handle(stol(e.sink_name), !e.sink_orientation_forward);
             //graph->create_edge(a, b);
-            std::cerr << "alignment! " << e.alignment << std::endl;
+            //std::cerr << "alignment! " << e.alignment << std::endl;
+            auto cigar = split_cigar(e.alignment);
+            uint64_t len = cigar_length(cigar);
+            std::string source_seq = seqs[nidx.get_id(e.source_name)];
+            std::string sink_seq = seqs[nidx.get_id(e.sink_name)];
+            if (!e.source_orientation_forward) reverse_complement_in_place(source_seq);
+            if (!e.sink_orientation_forward) reverse_complement_in_place(sink_seq);
+            auto realigned_cigar = align_ends(source_seq, sink_seq, len);
+            //std::cerr << "element count " << cigar.size() << std::endl;
+            //std::cerr << "element length " << cigar_length(cigar) << std::endl;
+            std::cout << e.to_string_1() << std::endl;
+            std::cerr << "realigned " << realigned_cigar << std::endl;
         });
 
     return(0);

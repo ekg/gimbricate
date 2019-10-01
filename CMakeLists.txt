@@ -90,7 +90,8 @@ add_executable(gimbricate
   ${CMAKE_SOURCE_DIR}/src/threads.cpp
   ${CMAKE_SOURCE_DIR}/src/exists.cpp
   ${CMAKE_SOURCE_DIR}/src/align.cpp
-  ${CMAKE_SOURCE_DIR}/src/nodes.cpp)
+  ${CMAKE_SOURCE_DIR}/src/nodes.cpp
+  ${CMAKE_SOURCE_DIR}/src/cigar.cpp)
 
 add_dependencies(gimbricate gfakluge)
 add_dependencies(gimbricate tayweeargs)
