@@ -1,0 +1,7 @@
+\#*
+.#*
+*~
+build/
+bin/
+test/
+.gdb_history
