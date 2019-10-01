@@ -71,13 +71,26 @@ ExternalProject_Get_property(gssw SOURCE_DIR)
 set(gssw_INCLUDE "${SOURCE_DIR}/src")
 set(gssw_LIB "${SOURCE_DIR}/lib")
 
+# BBHash perfect hasher, alltypes branch
+ExternalProject_Add(bbhash
+  GIT_REPOSITORY "https://github.com/vgteam/BBHash.git"
+  GIT_TAG "88fba4e50149d2d05855df0994f668b0f82783f7"
+  UPDATE_COMMAND ""
+  INSTALL_COMMAND ""
+  BUILD_COMMAND ""
+  CONFIGURE_COMMAND "")
+ExternalProject_Get_property(bbhash SOURCE_DIR)
+set(bbhash_INCLUDE "${SOURCE_DIR}")
+
 #set(CMAKE_BUILD_TYPE Release)
 
 # set up our target executable and specify its dependencies and includes
 add_executable(gimbricate
   ${CMAKE_SOURCE_DIR}/src/main.cpp
   ${CMAKE_SOURCE_DIR}/src/threads.cpp
-  ${CMAKE_SOURCE_DIR}/src/exists.cpp)
+  ${CMAKE_SOURCE_DIR}/src/exists.cpp
+  ${CMAKE_SOURCE_DIR}/src/align.cpp
+  ${CMAKE_SOURCE_DIR}/src/nodes.cpp)
 
 add_dependencies(gimbricate gfakluge)
 add_dependencies(gimbricate tayweeargs)
@@ -86,7 +99,8 @@ target_include_directories(gimbricate PUBLIC
   "${gfakluge_INCLUDE}"
   "${gfakluge_tinyFA_INCLUDE}"
   "${tayweeargs_INCLUDE}"
-  "${gssw_INCLUDE}")
+  "${gssw_INCLUDE}"
+  "${bbhash_INCLUDE}")
 
 target_link_libraries(gimbricate
   "${gssw_LIB}/libgssw.a"

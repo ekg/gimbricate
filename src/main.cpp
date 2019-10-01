@@ -6,6 +6,9 @@
 #include "threads.hpp"
 #include "args.hxx"
 #include "gssw.h"
+#include "gfakluge.hpp"
+#include "nodes.hpp"
+//#include <limits>
 
 using namespace gimbricate;
 
@@ -41,6 +44,41 @@ int main(int argc, char** argv) {
         std::cerr << "[gimbricate] ERROR: input sequence file " << args::get(gfa_in) << " does not exist" << std::endl;
         return 2;
     }
+
+    char* filename = (char*) args::get(gfa_in).c_str();
+    //std::cerr << "filename is " << filename << std::endl;
+    gfak::GFAKluge gg;
+    //double version = gg.detect_version_from_file(filename);
+    //std::cerr << version << " be version" << std::endl;
+    //assert(version == 1.0);
+    /*
+      uint64_t num_nodes = 0;
+      gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
+      ++num_nodes;
+      });
+      graph_t graph(num_nodes+1); // include delimiter
+    */
+    std::vector<std::string> seq_names;
+    gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
+            seq_names.push_back(s.name);
+        });
+    // build the pmhf
+    node_index nidx(seq_names);
+    // store the seqs for random access by node name
+    std::vector<std::string> seqs(seq_names.size());
+    seq_names.clear();
+    gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
+            seqs[nidx.get_id(s.name)] = s.sequence;
+            // write GFA lines here to output
+            std::cout << s.to_string_1() << std::endl;
+        });
+    gg.for_each_edge_line_in_file(filename, [&](gfak::edge_elem e) {
+            //if (e.source_name.empty()) return;
+            //handlegraph::handle_t a = graph->get_handle(stol(e.source_name), !e.source_orientation_forward);
+            //handlegraph::handle_t b = graph->get_handle(stol(e.sink_name), !e.sink_orientation_forward);
+            //graph->create_edge(a, b);
+            std::cerr << "alignment! " << e.alignment << std::endl;
+        });
 
     return(0);
 }
