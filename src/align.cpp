@@ -40,7 +40,7 @@ std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_f
 
     
     //gssw_print_graph_mapping(gm, stdout);
-    std::string final_cigar = graph_cigar(gm);
+    std::string final_cigar = overlap_cigar(gm);
     gssw_graph_mapping_destroy(gm);
     
     // note that nodes which are referred to in this graph are destroyed as well

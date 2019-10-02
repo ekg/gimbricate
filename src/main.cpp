@@ -70,6 +70,7 @@ int main(int argc, char** argv) {
     // store the seqs for random access by node name
     std::vector<std::string> seqs(seq_names.size());
     seq_names.clear();
+    std::cout << "H\tVN:Z:1.0" << std::endl;
     gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
             seqs[nidx.get_id(s.name)] = s.sequence;
             // write GFA lines here to output
@@ -87,11 +88,8 @@ int main(int argc, char** argv) {
             std::string sink_seq = seqs[nidx.get_id(e.sink_name)];
             if (!e.source_orientation_forward) reverse_complement_in_place(source_seq);
             if (!e.sink_orientation_forward) reverse_complement_in_place(sink_seq);
-            auto realigned_cigar = align_ends(source_seq, sink_seq, len);
-            //std::cerr << "element count " << cigar.size() << std::endl;
-            //std::cerr << "element length " << cigar_length(cigar) << std::endl;
+            e.alignment = align_ends(source_seq, sink_seq, len);
             std::cout << e.to_string_1() << std::endl;
-            std::cerr << "realigned " << realigned_cigar << std::endl;
         });
 
     return(0);
