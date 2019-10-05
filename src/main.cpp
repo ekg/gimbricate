@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
     args::ArgumentParser parser("gimbricate: recompute GFA link overlaps");
     args::HelpFlag help(parser, "help", "display this help menu", {'h', "help"});
     args::ValueFlag<std::string> gfa_in(parser, "FILE", "use this GFA FILE as input", {'g', "gfa"});
+    args::ValueFlag<uint64_t> read_cov_min(parser, "N", "require this many supporting reads in the RC tag to keep a node", {'c', "read-coverage"});
     args::ValueFlag<uint64_t> num_threads(parser, "N", "use this many threads during parallel steps", {'t', "threads"});
     args::Flag debug(parser, "debug", "enable debugging", {'d', "debug"});
     try {
@@ -71,10 +72,23 @@ int main(int argc, char** argv) {
     std::vector<std::string> seqs(seq_names.size());
     seq_names.clear();
     std::cout << "H\tVN:Z:1.0" << std::endl;
+    auto min_read_cov = args::get(read_cov_min);
     gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
-            seqs[nidx.get_id(s.name)] = s.sequence;
-            // write GFA lines here to output
-            std::cout << s.to_string_1() << std::endl;
+            bool to_filter = false;
+            if (min_read_cov != 0) {
+                for (auto& opt : s.opt_fields) { //.push_back(o);
+                    if (opt.key == "RC"
+                        && std::stoul(opt.val) < min_read_cov) {
+                        to_filter = true;
+                    }
+                }
+            }
+            // if we're not filtered
+            if (!to_filter) {
+                // save the sequence and write GFA lines here to output
+                seqs[nidx.get_id(s.name)] = s.sequence;
+                std::cout << s.to_string_1() << std::endl;
+            }
         });
     gg.for_each_edge_line_in_file(filename, [&](gfak::edge_elem e) {
             //if (e.source_name.empty()) return;
@@ -86,10 +100,13 @@ int main(int argc, char** argv) {
             uint64_t len = cigar_length(cigar);
             std::string source_seq = seqs[nidx.get_id(e.source_name)];
             std::string sink_seq = seqs[nidx.get_id(e.sink_name)];
-            if (!e.source_orientation_forward) reverse_complement_in_place(source_seq);
-            if (!e.sink_orientation_forward) reverse_complement_in_place(sink_seq);
-            e.alignment = align_ends(source_seq, sink_seq, len);
-            std::cout << e.to_string_1() << std::endl;
+            // if it's not filtered
+            if (!(source_seq.empty() || sink_seq.empty())) {
+                if (!e.source_orientation_forward) reverse_complement_in_place(source_seq);
+                if (!e.sink_orientation_forward) reverse_complement_in_place(sink_seq);
+                e.alignment = align_ends(source_seq, sink_seq, len);
+                std::cout << e.to_string_1() << std::endl;
+            }
         });
 
     return(0);
