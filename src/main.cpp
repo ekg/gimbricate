@@ -21,6 +21,7 @@ int main(int argc, char** argv) {
     args::ValueFlag<std::string> gfa_in(parser, "FILE", "use this GFA FILE as input", {'g', "gfa"});
     args::ValueFlag<uint64_t> read_cov_min(parser, "N", "require this many supporting reads in the RC tag to keep a node", {'c', "read-coverage"});
     args::ValueFlag<uint64_t> num_threads(parser, "N", "use this many threads during parallel steps", {'t', "threads"});
+    args::Flag no_rename(parser, "no-rename", "don't rename sequences to have increasing non-0 integer ids", {'n', "no-rename"});
     args::Flag debug(parser, "debug", "enable debugging", {'d', "debug"});
     try {
         parser.ParseCLI(argc, argv);
@@ -70,9 +71,12 @@ int main(int argc, char** argv) {
     node_index nidx(seq_names);
     // store the seqs for random access by node name
     std::vector<std::string> seqs(seq_names.size());
+    std::vector<uint64_t> ids(seq_names.size());
     seq_names.clear();
     std::cout << "H\tVN:Z:1.0" << std::endl;
     auto min_read_cov = args::get(read_cov_min);
+    bool rename_seqs = !args::get(no_rename);
+    uint64_t id = 1;
     gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
             bool to_filter = false;
             if (min_read_cov != 0) {
@@ -86,7 +90,13 @@ int main(int argc, char** argv) {
             // if we're not filtered
             if (!to_filter) {
                 // save the sequence and write GFA lines here to output
-                seqs[nidx.get_id(s.name)] = s.sequence;
+                uint64_t nidx_id = nidx.get_id(s.name);
+                seqs[nidx_id] = s.sequence;
+                if (rename_seqs) {
+                    ids[nidx_id] = id;
+                    s.name = std::to_string(id);
+                    ++id;
+                }
                 std::cout << s.to_string_1() << std::endl;
             }
         });
@@ -98,8 +108,14 @@ int main(int argc, char** argv) {
             //std::cerr << "alignment! " << e.alignment << std::endl;
             auto cigar = split_cigar(e.alignment);
             uint64_t len = cigar_length(cigar);
-            std::string source_seq = seqs[nidx.get_id(e.source_name)];
-            std::string sink_seq = seqs[nidx.get_id(e.sink_name)];
+            uint64_t source_nid = nidx.get_id(e.source_name);
+            uint64_t sink_nid = nidx.get_id(e.sink_name);
+            std::string source_seq = seqs[source_nid];
+            std::string sink_seq = seqs[sink_nid];
+            if (rename_seqs) {
+                e.source_name = std::to_string(ids[source_nid]);
+                e.sink_name = std::to_string(ids[sink_nid]);
+            }
             // if it's not filtered
             if (!(source_seq.empty() || sink_seq.empty())) {
                 if (!e.source_orientation_forward) reverse_complement_in_place(source_seq);
