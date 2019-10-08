@@ -5,7 +5,7 @@ namespace gimbricate {
 std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_full, const uint64_t& length) {
     // default parameters for genome sequence alignment
     std::string seq_x = (length > seq_x_full.size() ? seq_x_full : seq_x_full.substr(seq_x_full.size()-length, length));
-    std::string seq_y = seq_y_full.substr(0, length);
+    std::string seq_y = (length > seq_y_full.size() ? seq_y_full : seq_y_full.substr(0, length));
     
     int8_t match = 1, mismatch = 4;
     uint8_t gap_open = 6, gap_extension = 1;
