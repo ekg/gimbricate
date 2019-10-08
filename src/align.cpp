@@ -4,7 +4,7 @@ namespace gimbricate {
 
 std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_full, const uint64_t& length) {
     // default parameters for genome sequence alignment
-    std::string seq_x = seq_x_full.substr(seq_x_full.size()-length, length);
+    std::string seq_x = (length > seq_x_full.size() ? seq_x_full : seq_x_full.substr(seq_x_full.size()-length, length));
     std::string seq_y = seq_y_full.substr(0, length);
     
     int8_t match = 1, mismatch = 4;
@@ -22,16 +22,16 @@ std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_f
 	//	0  0  0  0  0	N (or other ambiguous code)
     int8_t* mat = gssw_create_score_matrix(match, mismatch);
 
-    gssw_node* node = (gssw_node*)gssw_node_create(NULL, 1, seq_y.c_str(), nt_table, mat);
+    gssw_node* node = (gssw_node*)gssw_node_create(NULL, 1, seq_x.c_str(), nt_table, mat);
     gssw_graph* graph = gssw_graph_create(1);
     gssw_graph_add_node(graph, node);
 
     int8_t fl_bonus = 63;
-    gssw_graph_fill(graph, seq_x.c_str(), nt_table, mat, gap_open, gap_extension, fl_bonus, fl_bonus, 15, 2, true);
+    gssw_graph_fill(graph, seq_y.c_str(), nt_table, mat, gap_open, gap_extension, fl_bonus, fl_bonus, 15, 2, true);
 
     gssw_graph_mapping* gm = gssw_graph_trace_back (graph,
-                                                    seq_x.c_str(),
-                                                    seq_x.length(),
+                                                    seq_y.c_str(),
+                                                    seq_y.length(),
                                                     nt_table,
                                                     mat,
                                                     gap_open,

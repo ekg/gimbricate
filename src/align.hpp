@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <iostream>
 #include "gssw.h"
 #include "cigar.hpp"
 
