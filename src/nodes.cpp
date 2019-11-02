@@ -8,7 +8,7 @@ node_index::node_index (const std::vector<std::string>& data) {
 	double gammaFactor = 2.0; // lowest bit/elem is achieved with gamma=1, higher values lead to larger mphf but faster construction/query
 	// gamma = 2 is a good tradeoff (leads to approx 3.7 bits/key )
 	//build the mphf
-	bphf = new boomphf::mphf<std::string,Custom_string_Hasher>(data.size(),data,nthreads,gammaFactor);
+	bphf = new boomphf::mphf<std::string,Custom_string_Hasher>(data.size(),data,nthreads,gammaFactor,false,false);
 }
 
 node_index::~node_index(void) {

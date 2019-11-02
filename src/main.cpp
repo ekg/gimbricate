@@ -20,8 +20,8 @@ int main(int argc, char** argv) {
     args::HelpFlag help(parser, "help", "display this help menu", {'h', "help"});
     args::ValueFlag<std::string> gfa_in_file(parser, "FILE", "use this GFA FILE as input", {'g', "gfa-in"});
     //args::ValueFlag<std::string> gfa_out_file(parser, "FILE", "write transformed GFA to FILE", {'o', "gfa-out"});
-    args::ValueFlag<std::string> fasta_out_file(parser, "FILE", "write renamed sequences to FASTA FILE", {'f', "fasta-in"});
-    args::ValueFlag<std::string> paf_out_file(parser, "FILE", "write GFA overlap alignments to this PAF FILE", {'p', "paf-in"});
+    args::ValueFlag<std::string> fasta_out_file(parser, "FILE", "write renamed sequences to FASTA FILE", {'f', "fasta-out"});
+    args::ValueFlag<std::string> paf_out_file(parser, "FILE", "write GFA overlap alignments to this PAF FILE", {'p', "paf-out"});
     args::ValueFlag<uint64_t> read_cov_min(parser, "N", "require this many supporting reads in the RC tag to keep a node", {'c', "read-coverage"});
     args::ValueFlag<uint64_t> num_threads(parser, "N", "use this many threads during parallel steps", {'t', "threads"});
     args::Flag no_rename(parser, "no-rename", "don't rename sequences to have increasing non-0 integer ids", {'n', "no-rename"});
@@ -72,6 +72,14 @@ int main(int argc, char** argv) {
       });
       graph_t graph(num_nodes+1); // include delimiter
     */
+
+    
+    bool write_fasta = !args::get(fasta_out_file).empty();
+    bool write_paf = !args::get(paf_out_file).empty();
+    std::ofstream fasta_out, paf_out;
+    if (write_paf) paf_out.open(args::get(paf_out_file));
+    if (write_fasta) fasta_out.open(args::get(fasta_out_file));
+
     std::vector<std::string> seq_names;
     gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
             seq_names.push_back(s.name);
@@ -107,6 +115,10 @@ int main(int argc, char** argv) {
                     ++id;
                 }
                 std::cout << s.to_string_1() << std::endl;
+                if (write_fasta) {
+                    fasta_out << ">" << s.name << std::endl
+                              << s.sequence << std::endl;
+                }
             }
         });
     gg.for_each_edge_line_in_file(filename, [&](gfak::edge_elem e) {
@@ -126,6 +138,9 @@ int main(int argc, char** argv) {
                 if (!e.sink_orientation_forward) reverse_complement_in_place(sink_seq);
                 e.alignment = align_ends(source_seq, sink_seq, len);
                 std::cout << e.to_string_1() << std::endl;
+                if (write_paf) {
+                    //paf_out << << std::endl;
+                }
             }
         });
 
