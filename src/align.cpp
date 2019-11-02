@@ -46,8 +46,7 @@ std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_f
     gssw_graph* graph = gssw_graph_create(1);
     gssw_graph_add_node(graph, node);
 
-    //int8_t fl_bonus = 63;
-    int8_t fl_bonus = 5;
+    int8_t fl_bonus = 5; // try 63 to force full length alignment
     gssw_graph_fill(graph, seq_y.c_str(), nt_table, mat, gap_open, gap_extension, fl_bonus, fl_bonus, 15, 2, true);
 
     gssw_graph_mapping* gm = gssw_graph_trace_back (graph,

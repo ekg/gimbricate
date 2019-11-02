@@ -131,12 +131,14 @@ int main(int argc, char** argv) {
             uint64_t source_nid = nidx.get_id(e.source_name);
             uint64_t sink_nid = nidx.get_id(e.sink_name);
             // flip around double inversions
+            /*
             if (e.source_orientation_forward == e.sink_orientation_forward
                 && !e.source_orientation_forward) {
                 e.source_orientation_forward = true;
                 e.sink_orientation_forward = true;
                 std::swap(source_nid, sink_nid);
             }
+            */
             std::string source_seq = seqs[source_nid];
             std::string sink_seq = seqs[sink_nid];
             if (rename_seqs) {
