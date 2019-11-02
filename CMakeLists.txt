@@ -74,7 +74,7 @@ set(gssw_LIB "${SOURCE_DIR}/lib")
 # BBHash perfect hasher, alltypes branch
 ExternalProject_Add(bbhash
   GIT_REPOSITORY "https://github.com/vgteam/BBHash.git"
-  GIT_TAG "88fba4e50149d2d05855df0994f668b0f82783f7"
+  GIT_TAG "36e4fe3eaeef762c831c49cdc01f1a3a2c7a97a4"
   UPDATE_COMMAND ""
   INSTALL_COMMAND ""
   BUILD_COMMAND ""
@@ -96,6 +96,7 @@ add_executable(gimbricate
 add_dependencies(gimbricate gfakluge)
 add_dependencies(gimbricate tayweeargs)
 add_dependencies(gimbricate gssw)
+add_dependencies(gimbricate bbhash)
 target_include_directories(gimbricate PUBLIC
   "${gfakluge_INCLUDE}"
   "${gfakluge_tinyFA_INCLUDE}"

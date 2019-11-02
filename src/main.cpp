@@ -18,7 +18,10 @@ using namespace gimbricate;
 int main(int argc, char** argv) {
     args::ArgumentParser parser("gimbricate: recompute GFA link overlaps");
     args::HelpFlag help(parser, "help", "display this help menu", {'h', "help"});
-    args::ValueFlag<std::string> gfa_in(parser, "FILE", "use this GFA FILE as input", {'g', "gfa"});
+    args::ValueFlag<std::string> gfa_in_file(parser, "FILE", "use this GFA FILE as input", {'g', "gfa-in"});
+    //args::ValueFlag<std::string> gfa_out_file(parser, "FILE", "write transformed GFA to FILE", {'o', "gfa-out"});
+    args::ValueFlag<std::string> fasta_out_file(parser, "FILE", "write renamed sequences to FASTA FILE", {'f', "fasta-in"});
+    args::ValueFlag<std::string> paf_out_file(parser, "FILE", "write GFA overlap alignments to this PAF FILE", {'p', "paf-in"});
     args::ValueFlag<uint64_t> read_cov_min(parser, "N", "require this many supporting reads in the RC tag to keep a node", {'c', "read-coverage"});
     args::ValueFlag<uint64_t> num_threads(parser, "N", "use this many threads during parallel steps", {'t', "threads"});
     args::Flag no_rename(parser, "no-rename", "don't rename sequences to have increasing non-0 integer ids", {'n', "no-rename"});
@@ -45,12 +48,18 @@ int main(int argc, char** argv) {
         omp_set_num_threads(1);
     }
 
-    if (!args::get(gfa_in).empty() && !file_exists(args::get(gfa_in))) {
-        std::cerr << "[gimbricate] ERROR: input sequence file " << args::get(gfa_in) << " does not exist" << std::endl;
+    if (!args::get(gfa_in_file).empty() && !file_exists(args::get(gfa_in_file))) {
+        std::cerr << "[gimbricate] ERROR: input sequence file " << args::get(gfa_in_file) << " does not exist" << std::endl;
         return 2;
     }
+    /*
+    if (args::get(gfa_out_file).empty() && args::get(paf_out_file).empty() && args::get(fasta_out_file).empty()) {
+        std::cerr << "[gimbricate] ERROR: please specify at least one output, either GFA (-o), PAF (-p), and/or FASTA (-f)" << std::endl;
+        return 4;
+    }
+    */
 
-    char* filename = (char*) args::get(gfa_in).c_str();
+    char* filename = (char*) args::get(gfa_in_file).c_str();
     //std::cerr << "filename is " << filename << std::endl;
     gfak::GFAKluge gg;
     //double version = gg.detect_version_from_file(filename);
