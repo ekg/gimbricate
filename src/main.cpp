@@ -11,6 +11,7 @@
 #include "cigar.hpp"
 #include "dna.hpp"
 #include "align.hpp"
+#include "paf.hpp"
 //#include <limits>
 
 using namespace gimbricate;
@@ -24,6 +25,7 @@ int main(int argc, char** argv) {
     args::ValueFlag<std::string> paf_out_file(parser, "FILE", "write GFA overlap alignments to this PAF FILE", {'p', "paf-out"});
     args::ValueFlag<uint64_t> read_cov_min(parser, "N", "require this many supporting reads in the RC tag to keep a node", {'c', "read-coverage"});
     args::ValueFlag<uint64_t> num_threads(parser, "N", "use this many threads during parallel steps", {'t', "threads"});
+    args::ValueFlag<double> expand_align(parser, "N", "expand the alignment length by this ratio (default 2.0)", {'e', "expand-align"});
     args::Flag no_rename(parser, "no-rename", "don't rename sequences to have increasing non-0 integer ids", {'n', "no-rename"});
     args::Flag debug(parser, "debug", "enable debugging", {'d', "debug"});
     try {
@@ -58,6 +60,8 @@ int main(int argc, char** argv) {
         return 4;
     }
     */
+
+    double scale_align = args::get(expand_align) ? args::get(expand_align) : 2.0;
 
     char* filename = (char*) args::get(gfa_in_file).c_str();
     //std::cerr << "filename is " << filename << std::endl;
@@ -123,9 +127,16 @@ int main(int argc, char** argv) {
         });
     gg.for_each_edge_line_in_file(filename, [&](gfak::edge_elem e) {
             auto cigar = split_cigar(e.alignment);
-            uint64_t len = cigar_length(cigar);
+            uint64_t len = std::round(cigar_length(cigar) * scale_align);
             uint64_t source_nid = nidx.get_id(e.source_name);
             uint64_t sink_nid = nidx.get_id(e.sink_name);
+            // flip around double inversions
+            if (e.source_orientation_forward == e.sink_orientation_forward
+                && !e.source_orientation_forward) {
+                e.source_orientation_forward = true;
+                e.sink_orientation_forward = true;
+                std::swap(source_nid, sink_nid);
+            }
             std::string source_seq = seqs[source_nid];
             std::string sink_seq = seqs[sink_nid];
             if (rename_seqs) {
@@ -136,10 +147,31 @@ int main(int argc, char** argv) {
             if (!(source_seq.empty() || sink_seq.empty())) {
                 if (!e.source_orientation_forward) reverse_complement_in_place(source_seq);
                 if (!e.sink_orientation_forward) reverse_complement_in_place(sink_seq);
-                e.alignment = align_ends(source_seq, sink_seq, len);
+                uint64_t query_start=0, query_end=0, target_start=0, target_end=0, num_matches=0;
+                std::string basic_cigar;
+                e.alignment = align_ends(source_seq, sink_seq, len,
+                                         e.source_orientation_forward,
+                                         e.sink_orientation_forward,
+                                         query_start, query_end,
+                                         target_start, target_end,
+                                         num_matches, basic_cigar);
                 std::cout << e.to_string_1() << std::endl;
                 if (write_paf) {
-                    //paf_out << << std::endl;
+                    paf_row_t paf;
+                    paf.query_sequence_name = e.sink_name;
+                    paf.query_sequence_length = sink_seq.length();
+                    paf.query_start = query_start;
+                    paf.query_end = query_end;
+                    paf.query_target_same_strand = e.source_orientation_forward == e.sink_orientation_forward;
+                    paf.target_sequence_name = e.source_name;
+                    paf.target_sequence_length = source_seq.length();
+                    paf.target_start = target_start;
+                    paf.target_end = target_end;
+                    paf.num_matches = num_matches;
+                    paf.alignment_block_length = 0;
+                    paf.mapping_quality = 100;
+                    paf.cigar = e.alignment;
+                    paf_out << paf << std::endl;
                 }
             }
         });

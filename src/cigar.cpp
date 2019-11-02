@@ -77,11 +77,64 @@ std::string overlap_cigar(gssw_graph_mapping* gm) {
             }
             // trim leading insertions as these just change the overlap length
             // checking that from_pos is 0 ensures that we didn't already write D into the cigar
-            if (!from_pos && type == 'I') continue;
+            //if (!from_pos && type == 'I') continue;
             s << e->length << type;
         }
     }
+    //return compress_cigar(s.str());
+    return s.str(); //compress_cigar(s.str());
+}
+
+std::string simple_cigar(gssw_graph_mapping* gm) {
+    std::stringstream s;
+    gssw_graph_cigar* gc = &gm->cigar;
+    gssw_node_cigar* nc = gc->elements;
+    for (int i = 0; i < gc->length; ++i, ++nc) {
+        gssw_cigar* c = nc->cigar;
+        int l = c->length;
+        gssw_cigar_element* e = c->elements;
+        for (int j=0; j < l; ++j, ++e) {
+            s << e->length << e->type;
+        }
+    }
     return compress_cigar(s.str());
+}
+
+void mapping_boundaries(gssw_graph_mapping* gm,
+                        uint64_t& query_start, uint64_t& query_end,
+                        uint64_t& target_start, uint64_t& target_end,
+                        uint64_t& num_matches) {
+    gssw_graph_cigar* gc = &gm->cigar;
+    gssw_node_cigar* nc = gc->elements;
+    int64_t to_pos = 0;
+    query_start = 0; //to_pos; // is always 0 in this scheme
+    int64_t from_pos = gm->position;
+    target_start = 0; //from_pos;
+    for (int64_t i = 0; i < gc->length; ++i, ++nc) {
+        if (i > 0) from_pos = 0; // reset for each node after the first,
+        gssw_cigar* c = nc->cigar;
+        uint64_t l = c->length;
+        gssw_cigar_element* e = c->elements;
+        for (uint64_t j=0; j < l; ++j, ++e) {
+            char type = e->type;
+            switch (type) {
+            case 'I':
+            case 'S':
+                to_pos += e->length;
+                break;
+            case 'D': from_pos += e->length; break;
+            case 'M':
+            case 'X':
+                from_pos += e->length;
+                to_pos += e->length;
+                num_matches += e->length;
+                break;
+            default: break;
+            }
+        }
+    }
+    query_end = to_pos;
+    target_end = from_pos;
 }
 
 }

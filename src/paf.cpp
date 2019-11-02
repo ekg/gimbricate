@@ -3,6 +3,8 @@
 
 namespace gimbricate {
 
+paf_row_t::paf_row_t(void) { }
+
 paf_row_t::paf_row_t(const std::string& line) {
     std::vector<std::string> fields;
     tokenize(line, fields, " \t");
