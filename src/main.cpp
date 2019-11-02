@@ -101,11 +101,6 @@ int main(int argc, char** argv) {
             }
         });
     gg.for_each_edge_line_in_file(filename, [&](gfak::edge_elem e) {
-            //if (e.source_name.empty()) return;
-            //handlegraph::handle_t a = graph->get_handle(stol(e.source_name), !e.source_orientation_forward);
-            //handlegraph::handle_t b = graph->get_handle(stol(e.sink_name), !e.sink_orientation_forward);
-            //graph->create_edge(a, b);
-            //std::cerr << "alignment! " << e.alignment << std::endl;
             auto cigar = split_cigar(e.alignment);
             uint64_t len = cigar_length(cigar);
             uint64_t source_nid = nidx.get_id(e.source_name);
