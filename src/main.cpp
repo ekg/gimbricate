@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
     }
     */
 
-    double scale_align = args::get(expand_align) ? args::get(expand_align) : 2.0;
+    double scale_align = args::get(expand_align) ? args::get(expand_align) : 1.0;
 
     char* filename = (char*) args::get(gfa_in_file).c_str();
     //std::cerr << "filename is " << filename << std::endl;
