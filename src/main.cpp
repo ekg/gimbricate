@@ -27,6 +27,7 @@ int main(int argc, char** argv) {
     args::ValueFlag<uint64_t> num_threads(parser, "N", "use this many threads during parallel steps", {'t', "threads"});
     args::ValueFlag<double> expand_align(parser, "N", "expand the alignment length by this ratio (default 2.0)", {'e', "expand-align"});
     args::Flag no_rename(parser, "no-rename", "don't rename sequences to have increasing non-0 integer ids", {'n', "no-rename"});
+    args::ValueFlag<std::string> prefix_names(parser, "PREFIX", "add this prefix to each sequence name", {'x', "name-prefix"});
     args::Flag debug(parser, "debug", "enable debugging", {'d', "debug"});
     try {
         parser.ParseCLI(argc, argv);
@@ -97,6 +98,7 @@ int main(int argc, char** argv) {
     std::cout << "H\tVN:Z:1.0" << std::endl;
     auto min_read_cov = args::get(read_cov_min);
     bool rename_seqs = !args::get(no_rename);
+    std::string name_prefix = args::get(prefix_names);
     uint64_t id = 1;
     gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
             bool to_filter = false;
@@ -113,7 +115,9 @@ int main(int argc, char** argv) {
                 // save the sequence and write GFA lines here to output
                 uint64_t nidx_id = nidx.get_id(s.name);
                 seqs[nidx_id] = s.sequence;
-                if (rename_seqs) {
+                if (!name_prefix.empty()) {
+                    s.name = name_prefix + s.name;
+                } else if (rename_seqs) {
                     ids[nidx_id] = id;
                     s.name = std::to_string(id);
                     ++id;
@@ -141,7 +145,10 @@ int main(int argc, char** argv) {
             */
             std::string source_seq = seqs[source_nid];
             std::string sink_seq = seqs[sink_nid];
-            if (rename_seqs) {
+            if (!name_prefix.empty()) {
+                e.source_name = name_prefix + e.source_name;
+                e.sink_name = name_prefix + e.sink_name;
+            } else if (rename_seqs) {
                 e.source_name = std::to_string(ids[source_nid]);
                 e.sink_name = std::to_string(ids[sink_nid]);
             }

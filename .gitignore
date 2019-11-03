@@ -3,5 +3,5 @@
 *~
 build/
 bin/
-test/
+experiments/
 .gdb_history
