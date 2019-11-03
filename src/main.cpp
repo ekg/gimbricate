@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
                     paf.num_matches = num_matches;
                     paf.alignment_block_length = 0;
                     paf.mapping_quality = 100;
-                    paf.cigar = e.alignment;
+                    paf.cigar = (!paf.query_target_same_strand ? flip_cigar(basic_cigar) : basic_cigar);
                     paf_out << paf << std::endl;
                 }
             }

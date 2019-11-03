@@ -23,7 +23,6 @@ std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_f
     if (length > seq_y_full.size()) {
         seq_y = seq_y_full;
     } else {
-        seq_y_offset = 0;
         seq_y = seq_y_full.substr(0, length);
     }
     

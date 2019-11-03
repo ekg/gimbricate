@@ -56,6 +56,16 @@ std::string compress_cigar(const std::string& cigar) {
     return s.str();
 }
 
+std::string flip_cigar(const std::string& cigar) {
+    auto cigar_split = split_cigar(cigar);
+    std::reverse(cigar_split.begin(), cigar_split.end());
+    std::stringstream s;
+    for (auto& c : cigar_split) {
+        s << c.first << c.second;
+    }
+    return s.str();
+}
+
 std::string overlap_cigar(gssw_graph_mapping* gm) {
     std::stringstream s;
     gssw_graph_cigar* gc = &gm->cigar;
@@ -94,6 +104,7 @@ std::string simple_cigar(gssw_graph_mapping* gm) {
         int l = c->length;
         gssw_cigar_element* e = c->elements;
         for (int j=0; j < l; ++j, ++e) {
+            if (e->type == 'S') continue;
             s << e->length << e->type;
         }
     }
@@ -107,9 +118,9 @@ void mapping_boundaries(gssw_graph_mapping* gm,
     gssw_graph_cigar* gc = &gm->cigar;
     gssw_node_cigar* nc = gc->elements;
     int64_t to_pos = 0;
-    query_start = 0; //to_pos; // is always 0 in this scheme
+    query_start = 0; // wait for our first soft clip to decide where we start
     int64_t from_pos = gm->position;
-    target_start = 0; //from_pos;
+    target_start = from_pos;
     for (int64_t i = 0; i < gc->length; ++i, ++nc) {
         if (i > 0) from_pos = 0; // reset for each node after the first,
         gssw_cigar* c = nc->cigar;
@@ -120,7 +131,10 @@ void mapping_boundaries(gssw_graph_mapping* gm,
             switch (type) {
             case 'I':
             case 'S':
-                to_pos += e->length;
+                if (to_pos == 0) {
+                    to_pos += e->length;
+                    query_start = to_pos;
+                }
                 break;
             case 'D': from_pos += e->length; break;
             case 'M':
