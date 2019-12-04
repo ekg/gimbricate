@@ -13,6 +13,19 @@ In some methods (like [shasta](https://github.com/chanzuckerberg/shasta)), the o
 It can help to correct these, because it lets us "bluntify" the graph.
 This produces a graph in which each base in the graph exists on only one node, which is a desirable property for variation graph and other pangenomic reference models.
 
+## preliminaries
+
+To build `gimbricate`, use git to download its source and cmake to build.
+You'll need a recent gcc >= v7.4.
+
+```
+git clone https://github.com/ekg/gimbricate.git
+cd gimbricate
+cmake -H. -Bbuild && cmake --build build -- -j 4
+```
+
+By default, it builds into `bin/` in the directory root.
+
 ## correcting the overlaps with `gimbricate`
 
 `gimbricate` reads a GFA and uses the CIGAR strings attached to `L` records to guide realignment of the ends of the sequences and the subsequent correction of the CIGAR strings on the overlaps.
