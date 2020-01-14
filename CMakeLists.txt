@@ -41,8 +41,7 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 # taywee's C++ args library, header only
 ExternalProject_Add(tayweeargs
-  GIT_REPOSITORY "https://github.com/Taywee/args.git"
-  GIT_TAG "3de44ec671db452cc0c4ef86399b108939768abb"
+  SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/args"
   UPDATE_COMMAND ""
   INSTALL_COMMAND "")
 ExternalProject_Get_property(tayweeargs SOURCE_DIR)
@@ -50,31 +49,28 @@ set(tayweeargs_INCLUDE "${SOURCE_DIR}")
 
 # gfakluge (now header only)
 ExternalProject_Add(gfakluge
-  GIT_REPOSITORY "https://github.com/vgteam/gfakluge.git"
-  GIT_TAG "d65e688b6f2d301ad953da578f3cf35e68feb452"
-  BUILD_IN_SOURCE TRUE
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR} # TODO ADD static build flag
+  SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gfakluge"
+  CMAKE_ARGS "${CMAKE_ARGS};-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>"
   UPDATE_COMMAND ""
   INSTALL_COMMAND ""
   BUILD_COMMAND ""
   CONFIGURE_COMMAND "")
+ExternalProject_Get_property(gfakluge SOURCE_DIR)
+set(gfakluge_INCLUDE "${SOURCE_DIR}/src")
+set(gfakluge_tinyFA_INCLUDE "${SOURCE_DIR}/src/tinyFA")
 ExternalProject_Get_property(gfakluge INSTALL_DIR)
-set(gfakluge_INCLUDE "${INSTALL_DIR}/src/gfakluge/src")
-set(gfakluge_tinyFA_INCLUDE "${INSTALL_DIR}/src/gfakluge/src/tinyFA")
 set(gfakluge_LIB "${INSTALL_DIR}/src/gfakluge")
 
 ExternalProject_Add(gssw
-  GIT_REPOSITORY "https://github.com/vgteam/gssw.git"
-  GIT_TAG "b0940eeb2a6433db4b60befc39dbc11dec3d8430"
+  SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gssw"
   INSTALL_COMMAND "")
 ExternalProject_Get_property(gssw SOURCE_DIR)
 set(gssw_INCLUDE "${SOURCE_DIR}/src")
 set(gssw_LIB "${SOURCE_DIR}/lib")
 
-# BBHash perfect hasher, alltypes branch
+# BBHash perfect hasher
 ExternalProject_Add(bbhash
-  GIT_REPOSITORY "https://github.com/vgteam/BBHash.git"
-  GIT_TAG "36e4fe3eaeef762c831c49cdc01f1a3a2c7a97a4"
+  SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/BBHash"
   UPDATE_COMMAND ""
   INSTALL_COMMAND ""
   BUILD_COMMAND ""
