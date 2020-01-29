@@ -19,7 +19,7 @@ To build `gimbricate`, use git to download its source and cmake to build.
 You'll need a recent gcc >= v7.4.
 
 ```
-git clone https://github.com/ekg/gimbricate.git
+git clone --recursive https://github.com/ekg/gimbricate.git
 cd gimbricate
 cmake -H. -Bbuild && cmake --build build -- -j 4
 ```
