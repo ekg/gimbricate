@@ -1,19 +1,7 @@
-# gimbricate
+# why this fork?
 
-Corrects the overlaps in DNA sequence graphs by realigning sequence ends.
-
-Optionally outputs FASTA and PAF representing the GFAv1-format graph.
-
-## bad overlaps!
-
-Almost no overlap-based assembly methods produce correct [GFAv1](https://github.com/GFA-spec/GFA-spec) output.
-Invariably, some overlaps are incorrectly defined.
-(The major exception to this are De Bruijn assemblers, which have fixed length overlaps that are correct by definition.)
-In some methods (like [shasta](https://github.com/chanzuckerberg/shasta)), the overlaps are systematically slightly wrong, due to their derivation from run length encoded sequences.
-It can help to correct these, because it lets us "bluntify" the graph.
-This produces a graph in which each base in the graph exists on only one node, which is a desirable property for variation graph and other pangenomic reference models.
-
-## preliminaries
+In this fork of [gimbricate]((https://github.com/ekg/gimbricate/) we commented out the code for realigning overlaps (see this [discussion](https://github.com/ekg/gimbricate/issues/2)). Hence, this version of gimbricate should only be used when dealing with perfect overlaps, such as the ones produced by [Bwise](https://github.com/Malfoy/BWISE). Here the idea is to run first the present fork gimbricate on the GFA outputted by Bwise in order to generate a FASTA and a PAF, then run [seqwish](https://github.com/ekg/seqwish) on the FASTA and PAF in order to generate a GFA without any overlap. The original version of gimbricate seqfaulted on the large overlaps produced by Bwise, which is why we created this fork.
+## installation
 
 To build `gimbricate`, use git to download its source and cmake to build.
 You'll need a recent gcc >= v7.4.
