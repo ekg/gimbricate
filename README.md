@@ -1,6 +1,7 @@
 ## why this fork?
 
-In this fork of [gimbricate](https://github.com/ekg/gimbricate/) we commented out the code for realigning overlaps (see this [discussion](https://github.com/ekg/gimbricate/issues/2)). Hence, this version of gimbricate should only be used when dealing with perfect overlaps, such as the ones produced by [Bwise](https://github.com/Malfoy/BWISE). Here the idea is to run first the present fork gimbricate on the GFA outputted by Bwise in order to generate a FASTA and a PAF, then run [seqwish](https://github.com/ekg/seqwish) on the FASTA and PAF in order to generate a GFA without any overlap. The original version of gimbricate seqfaulted on the large overlaps produced by Bwise, which is why we created this fork.
+In this fork of [gimbricate](https://github.com/ekg/gimbricate/) we commented out the code for realigning overlaps (see this [discussion](https://github.com/ekg/gimbricate/issues/2)). Hence, this version of gimbricate should only be used when dealing with perfect overlaps, such as the ones produced by [Bwise](https://github.com/Malfoy/BWISE). Here the idea is to run first the present fork of gimbricate on the GFA outputted by Bwise in order to generate a FASTA and a PAF, then run [seqwish](https://github.com/ekg/seqwish) on the FASTA and PAF in order to generate a GFA without any overlap. The original version of gimbricate seqfaulted on the large overlaps produced by Bwise, which is why we created this fork.
+
 ## installation
 
 To build `gimbricate`, use git to download its source and cmake to build.
