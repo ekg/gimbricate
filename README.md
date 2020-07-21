@@ -5,7 +5,7 @@ In this fork of [gimbricate](https://github.com/ekg/gimbricate/) we commented ou
 ## installation
 
 To build this fork of `gimbricate`, use git to download its source and cmake to build.
-You'll need a recent gcc >= v7.4.
+You'll need a recent gcc >= v7.4 as well as cmake >= v3.1
 
 ```
 git clone --recursive https://github.com/eeg-ebe/gimbricate.git
