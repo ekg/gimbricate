@@ -28,6 +28,7 @@ int main(int argc, char** argv) {
     args::ValueFlag<double> expand_align(parser, "N", "expand the alignment length by this ratio (default 2.0)", {'e', "expand-align"});
     args::Flag no_rename(parser, "no-rename", "don't rename sequences to have increasing non-0 integer ids", {'n', "no-rename"});
     args::ValueFlag<std::string> prefix_names(parser, "PREFIX", "add this prefix to each sequence name", {'x', "name-prefix"});
+    args::Flag prfctOverlaps(parser, "perfectOverlaps", "use if the overlaps of the gfa are already exact and contain only matches", {'P', "perfectOverlaps"});
     args::Flag debug(parser, "debug", "enable debugging", {'d', "debug"});
     try {
         parser.ParseCLI(argc, argv);
@@ -98,6 +99,7 @@ int main(int argc, char** argv) {
     std::cout << "H\tVN:Z:1.0" << std::endl;
     auto min_read_cov = args::get(read_cov_min);
     bool rename_seqs = !args::get(no_rename);
+    bool perfectOverlaps = args::get(prfctOverlaps);
     std::string name_prefix = args::get(prefix_names);
     uint64_t id = 1;
     gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
@@ -163,7 +165,8 @@ int main(int argc, char** argv) {
                                          e.sink_orientation_forward,
                                          query_start, query_end,
                                          target_start, target_end,
-                                         num_matches, basic_cigar);
+                                         num_matches, basic_cigar,
+                                         perfectOverlaps);
                 std::cout << e.to_string_1() << std::endl;
                 if (write_paf) {
                     paf_row_t paf;
