@@ -15,7 +15,8 @@ std::string align_ends(const std::string& seq_x_full,
                        uint64_t& query_start, uint64_t& query_end,
                        uint64_t& target_start, uint64_t& target_end,
                        uint64_t& num_matches,
-                       std::string& basic_cigar);
+                       std::string& basic_cigar,
+                       bool perfectOverlaps);
 
 
 }
