@@ -5,12 +5,19 @@
 using std::endl;
 namespace gimbricate {
 
-std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_full,
+std::string align_ends(const std::string& seq_x_full,
+                       const std::string& seq_y_full,
                        const uint64_t& length,
-                       bool seq_x_forward, bool seq_y_forward,
-                       uint64_t& query_start, uint64_t& query_end,
-                       uint64_t& target_start, uint64_t& target_end,
-                       uint64_t& num_matches, std::string& basic_cigar, bool perfectOverlaps) {
+                       bool seq_x_forward,
+                       bool seq_y_forward,
+                       uint64_t& query_start,
+                       uint64_t& query_end,
+                       uint64_t& target_start,
+                       uint64_t& target_end,
+                       uint64_t& num_matches,
+                       std::string& basic_cigar,
+                       bool perfectOverlaps,
+                       const uint64_t& smith_waterman_max_length) {
 
     // default parameters for genome sequence alignment
     std::string seq_x;
@@ -56,7 +63,45 @@ std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_f
         return std::to_string(length)+'M';
 
     }
+    else if (length < smith_waterman_max_length) {
 
+        int32_t maskLen = seq_y.size()/2;
+        maskLen = maskLen < 15 ? 15 : maskLen;
+
+        StripedSmithWaterman::Aligner aligner(1, 4, 6, 1);
+        StripedSmithWaterman::Filter filter;
+        StripedSmithWaterman::Alignment alignment;
+        // align
+        aligner.Align(seq_y.c_str(), seq_x.c_str(), seq_x.size(), filter, &alignment, maskLen);
+
+        // store the cigar
+        basic_cigar = remove_soft_clips(alignment.cigar_string);
+
+        // count matches
+        num_matches = count_matches(alignment.cigar_string);
+
+        // adjust the coordinates
+        query_start = seq_y_offset + alignment.query_begin;
+        query_end = seq_y_offset + alignment.query_end + 1;
+        target_start = seq_x_offset + alignment.ref_begin;
+        target_end = seq_x_offset + alignment.ref_end + 1;
+
+        // then invert the coordinates in the case that the pieces are inverted
+        if (!seq_y_forward) {
+            uint64_t i = seq_y_full.length() - query_start;
+            uint64_t j = seq_y_full.length() - query_end;
+            query_start = j;
+            query_end = i;
+        }
+        if (!seq_x_forward) {
+            uint64_t i = seq_x_full.length() - target_start;
+            uint64_t j = seq_x_full.length() - target_end;
+            target_start = j;
+            target_end = i;
+        }
+
+        return basic_cigar;
+    }
     else {
 
         EdlibAlignResult result = edlibAlign(seq_y.c_str(), seq_y.length(),
@@ -92,7 +137,7 @@ std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_f
         query_start = seq_y_offset;
         query_end = query_aligned_length + seq_y_offset;
         target_start = seq_x_offset + result.startLocations[0];
-        target_end = seq_x_offset + result.endLocations[0];
+        target_end = seq_x_offset + result.endLocations[0] + 1;
 
         //printf("edit_distance('hello', 'world!') = %d\n", result.editDistance);
         edlibFreeAlignResult(result);

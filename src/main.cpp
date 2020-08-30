@@ -24,10 +24,11 @@ int main(int argc, char** argv) {
     args::ValueFlag<std::string> paf_out_file(parser, "FILE", "write GFA overlap alignments to this PAF FILE", {'p', "paf-out"});
     args::ValueFlag<uint64_t> read_cov_min(parser, "N", "require this many supporting reads in the RC tag to keep a node", {'c', "read-coverage"});
     args::ValueFlag<uint64_t> num_threads(parser, "N", "use this many threads during parallel steps", {'t', "threads"});
-    args::ValueFlag<double> expand_align(parser, "N", "expand the alignment length by this ratio (default 2.0)", {'e', "expand-align"});
+    args::ValueFlag<double> expand_align(parser, "N", "expand the alignment length by this ratio [default: 2.0]", {'e', "expand-align"});
     args::Flag no_rename(parser, "no-rename", "don't rename sequences to have increasing non-0 integer ids", {'n', "no-rename"});
     args::ValueFlag<std::string> prefix_names(parser, "PREFIX", "add this prefix to each sequence name", {'x', "name-prefix"});
     args::Flag prfctOverlaps(parser, "perfectOverlaps", "use if the overlaps of the gfa are already exact and contain only matches", {'P', "perfectOverlaps"});
+    args::ValueFlag<uint64_t> ssw_max_l(parser, "N", "maximum length overlap to realign with striped Smith-Waterman-Gotoh (larger is with edlib) [default: 256]", {'m', "max-ssw"});
     args::Flag debug(parser, "debug", "enable debugging", {'d', "debug"});
     try {
         parser.ParseCLI(argc, argv);
@@ -94,6 +95,7 @@ int main(int argc, char** argv) {
     auto min_read_cov = args::get(read_cov_min);
     bool rename_seqs = !args::get(no_rename);
     bool perfectOverlaps = args::get(prfctOverlaps);
+    uint64_t ssw_max_length = args::get(ssw_max_l) ? args::get(ssw_max_l) : 256;
     std::string name_prefix = args::get(prefix_names);
     uint64_t id = 1;
     gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
@@ -160,7 +162,8 @@ int main(int argc, char** argv) {
                                          query_start, query_end,
                                          target_start, target_end,
                                          num_matches, basic_cigar,
-                                         perfectOverlaps);
+                                         perfectOverlaps,
+                                         ssw_max_length);
                 std::cout << e.to_string_1() << std::endl;
                 if (write_paf) {
                     paf_row_t paf;

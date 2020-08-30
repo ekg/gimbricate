@@ -12,6 +12,8 @@ std::vector<std::pair<uint64_t, char>> split_cigar(const std::string& cigar_str)
 uint64_t cigar_length(const std::vector<std::pair<uint64_t, char>>& cigar);
 std::string compress_cigar(const std::string& cigar);
 std::string flip_cigar(const std::string& cigar);
+std::string remove_soft_clips(const std::string& cigar);
+uint64_t count_matches(const std::string& cigar);
 
 char* edlib_alignment_to_cigar(const unsigned char* const alignment,
                                const int alignmentLength,

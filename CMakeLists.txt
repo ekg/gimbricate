@@ -78,6 +78,9 @@ set(bbhash_INCLUDE "${SOURCE_DIR}")
 
 add_subdirectory(deps/edlib EXCLUDE_FROM_ALL)
 
+# striped smith-waterman-gotoh library
+set(ssw_INCLUDE ${CMAKE_SOURCE_DIR}/deps/ssw)
+
 #set(CMAKE_BUILD_TYPE Release)
 
 # set up our target executable and specify its dependencies and includes
@@ -88,7 +91,9 @@ add_executable(gimbricate
   ${CMAKE_SOURCE_DIR}/src/align.cpp
   ${CMAKE_SOURCE_DIR}/src/nodes.cpp
   ${CMAKE_SOURCE_DIR}/src/cigar.cpp
-  ${CMAKE_SOURCE_DIR}/src/paf.cpp)
+  ${CMAKE_SOURCE_DIR}/src/paf.cpp
+  ${CMAKE_SOURCE_DIR}/deps/ssw/ssw.c
+  ${CMAKE_SOURCE_DIR}/deps/ssw/ssw_cpp.cpp)
 
 add_dependencies(gimbricate gfakluge)
 add_dependencies(gimbricate tayweeargs)
@@ -97,7 +102,8 @@ target_include_directories(gimbricate PUBLIC
   "${gfakluge_INCLUDE}"
   "${gfakluge_tinyFA_INCLUDE}"
   "${tayweeargs_INCLUDE}"
-  "${bbhash_INCLUDE}")
+  "${bbhash_INCLUDE}"
+  "${ssw_INCLUDE}")
 
 target_link_libraries(gimbricate
   edlib

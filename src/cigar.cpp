@@ -66,6 +66,28 @@ std::string flip_cigar(const std::string& cigar) {
     return s.str();
 }
 
+std::string remove_soft_clips(const std::string& cigar) {
+    auto cigar_split = split_cigar(cigar);
+    std::stringstream s;
+    for (auto& c : cigar_split) {
+        if (c.second != 'S') {
+            s << c.first << c.second;
+        }
+    }
+    return s.str();
+}
+
+uint64_t count_matches(const std::string& cigar) {
+    auto cigar_split = split_cigar(cigar);
+    uint64_t matches = 0;
+    for (auto& c : cigar_split) {
+        if (c.second == '=') {
+            matches += c.first;
+        }
+    }
+    return matches;
+}
+
 char* edlib_alignment_to_cigar(const unsigned char* const alignment,
                                const int alignmentLength,
                                uint64_t& refAlignedLength,
