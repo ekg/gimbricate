@@ -5,7 +5,6 @@
 #include "exists.hpp"
 #include "threads.hpp"
 #include "args.hxx"
-#include "gssw.h"
 #include "gfakluge.hpp"
 #include "nodes.hpp"
 #include "cigar.hpp"
@@ -25,10 +24,11 @@ int main(int argc, char** argv) {
     args::ValueFlag<std::string> paf_out_file(parser, "FILE", "write GFA overlap alignments to this PAF FILE", {'p', "paf-out"});
     args::ValueFlag<uint64_t> read_cov_min(parser, "N", "require this many supporting reads in the RC tag to keep a node", {'c', "read-coverage"});
     args::ValueFlag<uint64_t> num_threads(parser, "N", "use this many threads during parallel steps", {'t', "threads"});
-    args::ValueFlag<double> expand_align(parser, "N", "expand the alignment length by this ratio (default 2.0)", {'e', "expand-align"});
+    args::ValueFlag<double> expand_align(parser, "N", "expand the alignment length by this ratio [default: 2.0]", {'e', "expand-align"});
     args::Flag no_rename(parser, "no-rename", "don't rename sequences to have increasing non-0 integer ids", {'n', "no-rename"});
     args::ValueFlag<std::string> prefix_names(parser, "PREFIX", "add this prefix to each sequence name", {'x', "name-prefix"});
     args::Flag prfctOverlaps(parser, "perfectOverlaps", "use if the overlaps of the gfa are already exact and contain only matches", {'P', "perfectOverlaps"});
+    args::ValueFlag<uint64_t> ssw_max_l(parser, "N", "maximum length overlap to realign with striped Smith-Waterman-Gotoh (larger is with edlib) [default: 256]", {'m', "max-ssw"});
     args::Flag debug(parser, "debug", "enable debugging", {'d', "debug"});
     try {
         parser.ParseCLI(argc, argv);
@@ -68,17 +68,12 @@ int main(int argc, char** argv) {
     char* filename = (char*) args::get(gfa_in_file).c_str();
     //std::cerr << "filename is " << filename << std::endl;
     gfak::GFAKluge gg;
-    //double version = gg.detect_version_from_file(filename);
-    //std::cerr << version << " be version" << std::endl;
-    //assert(version == 1.0);
-    /*
-      uint64_t num_nodes = 0;
-      gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
-      ++num_nodes;
-      });
-      graph_t graph(num_nodes+1); // include delimiter
-    */
-
+    double version = gg.detect_version_from_file(filename);
+    if (version != 1.0) {
+        std::cerr << "[gimbricate::main] error: input GFA is not version 1 (or may lack header)" << std::endl
+                  << "[gimbricate::main] ensure that your file begins with a header line of the form 'H\\tVN:Z:1.0' and is in GFAv1 format" << std::endl;
+        exit(1);
+    }
     
     bool write_fasta = !args::get(fasta_out_file).empty();
     bool write_paf = !args::get(paf_out_file).empty();
@@ -100,6 +95,7 @@ int main(int argc, char** argv) {
     auto min_read_cov = args::get(read_cov_min);
     bool rename_seqs = !args::get(no_rename);
     bool perfectOverlaps = args::get(prfctOverlaps);
+    uint64_t ssw_max_length = args::get(ssw_max_l) ? args::get(ssw_max_l) : 256;
     std::string name_prefix = args::get(prefix_names);
     uint64_t id = 1;
     gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
@@ -166,7 +162,8 @@ int main(int argc, char** argv) {
                                          query_start, query_end,
                                          target_start, target_end,
                                          num_matches, basic_cigar,
-                                         perfectOverlaps);
+                                         perfectOverlaps,
+                                         ssw_max_length);
                 std::cout << e.to_string_1() << std::endl;
                 if (write_paf) {
                     paf_row_t paf;

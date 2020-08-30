@@ -5,12 +5,19 @@
 using std::endl;
 namespace gimbricate {
 
-std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_full,
+std::string align_ends(const std::string& seq_x_full,
+                       const std::string& seq_y_full,
                        const uint64_t& length,
-                       bool seq_x_forward, bool seq_y_forward,
-                       uint64_t& query_start, uint64_t& query_end,
-                       uint64_t& target_start, uint64_t& target_end,
-                       uint64_t& num_matches, std::string& basic_cigar, bool perfectOverlaps) {
+                       bool seq_x_forward,
+                       bool seq_y_forward,
+                       uint64_t& query_start,
+                       uint64_t& query_end,
+                       uint64_t& target_start,
+                       uint64_t& target_end,
+                       uint64_t& num_matches,
+                       std::string& basic_cigar,
+                       bool perfectOverlaps,
+                       const uint64_t& smith_waterman_max_length) {
 
     // default parameters for genome sequence alignment
     std::string seq_x;
@@ -31,7 +38,6 @@ std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_f
     
     if (perfectOverlaps) {
 
-        //gssw_print_graph_mapping(gm, stdout);
         basic_cigar = std::to_string(length)+'M';
 
         query_start = 0;
@@ -57,55 +63,28 @@ std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_f
         return std::to_string(length)+'M';
 
     }
+    else if (length < smith_waterman_max_length) {
 
-    else{
-        int8_t match = 1, mismatch = 4;
-        uint8_t gap_open = 6, gap_extension = 1;
+        int32_t maskLen = seq_y.size()/2;
+        maskLen = maskLen < 15 ? 15 : maskLen;
 
-            /* This table is used to transform nucleotide letters into numbers. */
-        int8_t* nt_table = gssw_create_nt_table();
+        StripedSmithWaterman::Aligner aligner(1, 4, 6, 1);
+        StripedSmithWaterman::Filter filter;
+        StripedSmithWaterman::Alignment alignment;
+        // align
+        aligner.Align(seq_y.c_str(), seq_x.c_str(), seq_x.size(), filter, &alignment, maskLen);
 
-            // initialize scoring matrix for genome sequences
-            //  A  C  G  T	N (or other ambiguous code)
-            //  2 -2 -2 -2 	0	A
-            // -2  2 -2 -2 	0	C
-            // -2 -2  2 -2 	0	G
-            // -2 -2 -2  2 	0	T
-            //	0  0  0  0  0	N (or other ambiguous code)
-        int8_t* mat = gssw_create_score_matrix(match, mismatch);
+        // store the cigar
+        basic_cigar = remove_soft_clips(alignment.cigar_string);
 
-        gssw_node* node = (gssw_node*)gssw_node_create(NULL, 1, seq_x.c_str(), nt_table, mat);
-        gssw_graph* graph = gssw_graph_create(1);
-        gssw_graph_add_node(graph, node);
+        // count matches
+        num_matches = count_matches(alignment.cigar_string);
 
-        int8_t fl_bonus = 5; // try 63 to force full length alignment
-        gssw_graph_fill(graph, seq_y.c_str(), nt_table, mat, gap_open, gap_extension, fl_bonus, fl_bonus, 15, 2, true);
-
-        gssw_graph_mapping* gm = gssw_graph_trace_back (graph,
-                                                        seq_y.c_str(),
-                                                        seq_y.length(),
-                                                        nt_table,
-                                                        mat,
-                                                        gap_open,
-                                                        gap_extension,
-                                                        fl_bonus, fl_bonus);
-
-
-        //gssw_print_graph_mapping(gm, stdout);
-        std::string final_cigar = overlap_cigar(gm);
-        basic_cigar = simple_cigar(gm);
-
-        // determine the start and end of the alignment in the target and query
-        mapping_boundaries(gm,
-                           query_start, query_end,
-                           target_start, target_end,
-                           num_matches);
-
-        // correct back to the coordinates of the full sequence
-        query_start += seq_y_offset;
-        query_end += seq_y_offset;
-        target_start += seq_x_offset;
-        target_end += seq_x_offset;
+        // adjust the coordinates
+        query_start = seq_y_offset + alignment.query_begin;
+        query_end = seq_y_offset + alignment.query_end + 1;
+        target_start = seq_x_offset + alignment.ref_begin;
+        target_end = seq_x_offset + alignment.ref_end + 1;
 
         // then invert the coordinates in the case that the pieces are inverted
         if (!seq_y_forward) {
@@ -121,14 +100,65 @@ std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_f
             target_end = i;
         }
 
-        // clean up
-        gssw_graph_mapping_destroy(gm);
+        return basic_cigar;
+    }
+    else {
 
-        // note that nodes which are referred to in this graph are destroyed as well
-        gssw_graph_destroy(graph);
+        EdlibAlignResult result = edlibAlign(seq_y.c_str(), seq_y.length(),
+                                             seq_x.c_str(), seq_x.length(),
+                                             edlibNewAlignConfig(-1, // no edit limit
+                                                                 EDLIB_MODE_HW,
+                                                                 EDLIB_TASK_PATH,
+                                                                 NULL, 0));
 
-        free(nt_table);
-            free(mat);
+        if (result.status != EDLIB_STATUS_OK) {
+            std::cerr << "[gimbricate::align] error: alignment failure" << std::endl
+                      << "query\t" << seq_y << std::endl
+                      << "target\t" << seq_x << std::endl;
+            exit(1);
+        }
+
+        // get the cigar
+        // get the starting and ending locations
+        // boom
+        uint64_t target_aligned_length=0, query_aligned_length=0;
+        uint64_t mismatches=0, insertions=0, deletions=0, softclips=0;
+
+        char* cigar = edlib_alignment_to_cigar(result.alignment,
+                                               result.alignmentLength,
+                                               target_aligned_length,
+                                               query_aligned_length,
+                                               num_matches,
+                                               mismatches,
+                                               insertions,
+                                               deletions,
+                                               softclips);
+
+        query_start = seq_y_offset;
+        query_end = query_aligned_length + seq_y_offset;
+        target_start = seq_x_offset + result.startLocations[0];
+        target_end = seq_x_offset + result.endLocations[0] + 1;
+
+        //printf("edit_distance('hello', 'world!') = %d\n", result.editDistance);
+        edlibFreeAlignResult(result);
+
+        std::string final_cigar = std::string(cigar);
+        free(cigar);
+        basic_cigar = final_cigar;
+
+        // then invert the coordinates in the case that the pieces are inverted
+        if (!seq_y_forward) {
+            uint64_t i = seq_y_full.length() - query_start;
+            uint64_t j = seq_y_full.length() - query_end;
+            query_start = j;
+            query_end = i;
+        }
+        if (!seq_x_forward) {
+            uint64_t i = seq_x_full.length() - target_start;
+            uint64_t j = seq_x_full.length() - target_end;
+            target_start = j;
+            target_end = i;
+        }
 
         return final_cigar;
     }
