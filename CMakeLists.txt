@@ -66,13 +66,6 @@ set(gfakluge_tinyFA_INCLUDE "${SOURCE_DIR}/src/tinyFA")
 ExternalProject_Get_property(gfakluge INSTALL_DIR)
 set(gfakluge_LIB "${INSTALL_DIR}/src/gfakluge")
 
-ExternalProject_Add(gssw
-  SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/gssw"
-  INSTALL_COMMAND "")
-ExternalProject_Get_property(gssw SOURCE_DIR)
-set(gssw_INCLUDE "${SOURCE_DIR}/src")
-set(gssw_LIB "${SOURCE_DIR}/lib")
-
 # BBHash perfect hasher
 ExternalProject_Add(bbhash
   SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/BBHash"
@@ -99,21 +92,17 @@ add_executable(gimbricate
 
 add_dependencies(gimbricate gfakluge)
 add_dependencies(gimbricate tayweeargs)
-add_dependencies(gimbricate gssw)
 add_dependencies(gimbricate bbhash)
 target_include_directories(gimbricate PUBLIC
   "${gfakluge_INCLUDE}"
   "${gfakluge_tinyFA_INCLUDE}"
   "${tayweeargs_INCLUDE}"
-  "${gssw_INCLUDE}"
   "${bbhash_INCLUDE}")
 
 target_link_libraries(gimbricate
-  "${gssw_LIB}/libgssw.a"
   edlib
   -lm
   )
-#target_link_libraries(your_exe edlib)
 
 install(TARGETS gimbricate DESTINATION bin)
 

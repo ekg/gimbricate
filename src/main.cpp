@@ -5,7 +5,6 @@
 #include "exists.hpp"
 #include "threads.hpp"
 #include "args.hxx"
-#include "gssw.h"
 #include "gfakluge.hpp"
 #include "nodes.hpp"
 #include "cigar.hpp"
