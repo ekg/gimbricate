@@ -2,6 +2,7 @@
 
 #include <string>
 #include <iostream>
+#include "edlib.h"
 #include "gssw.h"
 #include "cigar.hpp"
 

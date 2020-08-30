@@ -83,6 +83,8 @@ ExternalProject_Add(bbhash
 ExternalProject_Get_property(bbhash SOURCE_DIR)
 set(bbhash_INCLUDE "${SOURCE_DIR}")
 
+add_subdirectory(deps/edlib EXCLUDE_FROM_ALL)
+
 #set(CMAKE_BUILD_TYPE Release)
 
 # set up our target executable and specify its dependencies and includes
@@ -108,8 +110,10 @@ target_include_directories(gimbricate PUBLIC
 
 target_link_libraries(gimbricate
   "${gssw_LIB}/libgssw.a"
+  edlib
   -lm
   )
+#target_link_libraries(your_exe edlib)
 
 install(TARGETS gimbricate DESTINATION bin)
 
