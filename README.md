@@ -15,11 +15,11 @@ This produces a graph in which each base in the graph exists on only one node, w
 
 ## installation
 
-To build this fork of `gimbricate`, use git to download its source and cmake to build.
+To build `gimbricate`, use git to download its source and cmake to build.
 You'll need a recent gcc >= v7.4 as well as cmake >= v3.1
 
 ```
-git clone --recursive https://github.com/eeg-ebe/gimbricate.git
+git clone --recursive https://github.com/ekg/gimbricate.git
 cd gimbricate
 cmake -H. -Bbuild && cmake --build build -- -j 4
 ```
