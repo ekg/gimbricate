@@ -68,9 +68,12 @@ int main(int argc, char** argv) {
     char* filename = (char*) args::get(gfa_in_file).c_str();
     //std::cerr << "filename is " << filename << std::endl;
     gfak::GFAKluge gg;
-    //double version = gg.detect_version_from_file(filename);
-    //std::cerr << version << " be version" << std::endl;
-    //assert(version == 1.0);
+    double version = gg.detect_version_from_file(filename);
+    if (version != 1.0) {
+        std::cerr << "[gimbricate::main] error: input GFA is not version 1 (or may lack header)" << std::endl
+                  << "[gimbricate::main] ensure that your file begins with a header line of the form 'H\\tVN:Z:1.0' and is in GFAv1 format" << std::endl;
+        exit(1);
+    }
     /*
       uint64_t num_nodes = 0;
       gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
