@@ -62,9 +62,10 @@ std::string align_ends(const std::string& seq_x_full, const std::string& seq_y_f
         EdlibAlignResult result = edlibAlign(seq_y.c_str(), seq_y.length(),
                                              seq_x.c_str(), seq_x.length(),
                                              edlibNewAlignConfig(-1, // no edit limit
-                                                                 EDLIB_MODE_NW, // global alignment
+                                                                 EDLIB_MODE_HW,
                                                                  EDLIB_TASK_PATH,
                                                                  NULL, 0));
+
         if (result.status != EDLIB_STATUS_OK) {
             std::cerr << "[gimbricate::align] error: alignment failure" << std::endl
                       << "query\t" << seq_y << std::endl
