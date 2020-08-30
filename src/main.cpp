@@ -74,14 +74,6 @@ int main(int argc, char** argv) {
                   << "[gimbricate::main] ensure that your file begins with a header line of the form 'H\\tVN:Z:1.0' and is in GFAv1 format" << std::endl;
         exit(1);
     }
-    /*
-      uint64_t num_nodes = 0;
-      gg.for_each_sequence_line_in_file(filename, [&](gfak::sequence_elem s) {
-      ++num_nodes;
-      });
-      graph_t graph(num_nodes+1); // include delimiter
-    */
-
     
     bool write_fasta = !args::get(fasta_out_file).empty();
     bool write_paf = !args::get(paf_out_file).empty();
